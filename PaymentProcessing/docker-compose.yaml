@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  payment-processing:
+    build: .
+    image: payment-processing
+    ports:
+      - "8080:8080"  # Adjust the port mapping as needed
+    depends_on:
+      - rabbitmq
+    
+  rabbitmq:
+    image: "rabbitmq:management"
+    ports:
+      - "5672:5672"  # RabbitMQ default port
+      - "15672:15672"  # RabbitMQ Management Plugin port
+    environment:
+      RABBITMQ_DEFAULT_USER: "guest"
+      RABBITMQ_DEFAULT_PASS: "guest"
