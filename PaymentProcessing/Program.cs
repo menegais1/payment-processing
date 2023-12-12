@@ -63,7 +63,7 @@ await paymentTransactionQueue.Connect();
 
 builder.Services.AddScoped<IOrganizationRepository, InMemoryOrganizationRepository>();
 builder.Services.AddSingleton<IAsyncPaymentTransactionPublisherQueue>(paymentTransactionQueue);
-builder.Services.AddSingleton<PaymentTransactionProcessor>();
+builder.Services.AddSingleton<PaymentTransactionService>();
 
 var app = builder.Build();
 
@@ -86,6 +86,6 @@ app.MapControllers();
 app.UseHttpsRedirection();
 
 // Force initialization for the processor
-var processor = app.Services.GetRequiredService<PaymentTransactionProcessor>();
+var processor = app.Services.GetRequiredService<PaymentTransactionService>();
 
 app.Run();

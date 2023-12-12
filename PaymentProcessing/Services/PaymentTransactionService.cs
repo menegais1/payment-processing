@@ -2,9 +2,9 @@ using NuGet.Protocol;
 
 namespace PaymentProcessing;
 
-public class PaymentTransactionProcessor
+public class PaymentTransactionService
 {
-    public PaymentTransactionProcessor(IAsyncPaymentTransactionConsumerQueue consumerQueue)
+    public PaymentTransactionService(IAsyncPaymentTransactionConsumerQueue consumerQueue)
     {
         consumerQueue.RegisterConsumer(this.ProcessMessage);
     }

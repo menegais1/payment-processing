@@ -2,16 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using NuGet.Protocol;
+using PaymentProcessing.Schemas;
 
 namespace PaymentProcessing
 {
-    public class CreatePaymentTransactionRequest()
-    {
-        public string PayerAccount { get; set; }
-        public string PayeeAccount { get; set; }
-        public double Amount { get; set; }
-    }
-
     [Route("transaction")]
     [ApiController]
     public class PaymentTransactionController : ControllerBase
@@ -24,7 +18,7 @@ namespace PaymentProcessing
         }
 
         [HttpPost]
-        // [Authorize]
+        [Authorize]
         public async Task<ActionResult<CreatePaymentTransactionRequest>> CreatePaymentTransaction(
             CreatePaymentTransactionRequest request)
         {

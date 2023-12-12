@@ -6,7 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace PaymentProcessing;
 
-public class JwtTokenGenerator
+public class AuthenticationService
 {
     public static string GenerateJwtToken(string orgId)
     {

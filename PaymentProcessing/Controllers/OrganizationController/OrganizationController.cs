@@ -13,8 +13,8 @@ namespace PaymentProcessing
         [HttpPost("register")]
         public async Task<ActionResult<Organization>> Register(RegisterRequest request)
         {
-            var secretKey = "sk_" + JwtTokenGenerator.GenerateSecretKey();
-            var orgId = "org_" + JwtTokenGenerator.GenerateSecretKey();
+            var secretKey = "sk_" + AuthenticationService.GenerateSecretKey();
+            var orgId = "org_" + AuthenticationService.GenerateSecretKey();
             try
             {
                 var organization =
@@ -33,7 +33,7 @@ namespace PaymentProcessing
         {
             if (!organizationRepository.IsOrganizationValid(request.OrgId, request.OrgSecretKey))
                 return Unauthorized("The organization is not registered in the system.");
-            return JwtTokenGenerator.GenerateJwtToken(request.OrgId);
+            return AuthenticationService.GenerateJwtToken(request.OrgId);
         }
     }
 }
