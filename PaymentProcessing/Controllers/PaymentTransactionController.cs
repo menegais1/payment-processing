@@ -16,12 +16,20 @@ namespace PaymentProcessing
     [ApiController]
     public class PaymentTransactionController : ControllerBase
     {
+        private IAsyncPaymentTransactionPublisherQueue _publisherQueue;
+
+        public PaymentTransactionController(IAsyncPaymentTransactionPublisherQueue publisherQueue)
+        {
+            _publisherQueue = publisherQueue;
+        }
+
         [HttpPost]
-        [Authorize]
+        // [Authorize]
         public async Task<ActionResult<CreatePaymentTransactionRequest>> CreatePaymentTransaction(
             CreatePaymentTransactionRequest request)
         {
-            await Console.Out.WriteLineAsync(request.ToJson());
+            _publisherQueue.PublishMessage(
+                new PaymentTransactionMessagePayload(PaymentTransactionTaskType.Create, request.ToJson()));
             return request;
         }
 

@@ -57,7 +57,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         };
     });
 
+
+var paymentTransactionQueue = new RabbitMqAsyncPaymentTransactionQueue();
+await paymentTransactionQueue.Connect();
+
 builder.Services.AddScoped<IOrganizationRepository, InMemoryOrganizationRepository>();
+builder.Services.AddSingleton<IAsyncPaymentTransactionPublisherQueue>(paymentTransactionQueue);
+builder.Services.AddSingleton<PaymentTransactionProcessor>();
 
 var app = builder.Build();
 
@@ -74,62 +80,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.UseHttpsRedirection();
 
-// Connection settings
-var factory = new ConnectionFactory
-{
-    HostName = "rabbitmq", // Replace with your RabbitMQ server hostname or IP
-    Port = 5672,
-    UserName = "guest",
-    Password = "guest",
-};
-
-// Create a connection
-// Create a connection
-using (var connection = factory.CreateConnection())
-{
-    // Create a channel
-    using (var channel = connection.CreateModel())
-    {
-        // Declare a topic exchange
-        channel.ExchangeDeclare("PaymentTransaction", ExchangeType.Topic);
-
-        // Declare a queue named "PaymentTransactionQueue"
-        channel.QueueDeclare("PaymentTransactionQueue", durable: true, exclusive: false, autoDelete: false,
-            arguments: null);
-
-        // Bind the queue to the exchange with a routing key "payment.*"
-        channel.QueueBind("PaymentTransactionQueue", "PaymentTransaction", "payment.*");
-
-        // Create a consumer to listen for messages
-        var consumer = new EventingBasicConsumer(channel);
-        consumer.Received += (sender, ea) =>
-        {
-            var body = ea.Body.ToArray();
-            var message = Encoding.UTF8.GetString(body);
-            Console.WriteLine($"Received message: {message}");
-        };
-
-        // Start listening for messages on the PaymentTransaction topic
-        channel.BasicConsume(queue: "PaymentTransactionQueue",
-            autoAck: true,
-            consumer: consumer);
-
-        // Publish a sample message
-        var message = "Payment successful for Order #123";
-        var body = Encoding.UTF8.GetBytes(message);
-        channel.BasicPublish(exchange: "PaymentTransaction",
-            routingKey: "payment.successful",
-            basicProperties: null,
-            body: body);
-
-        Console.WriteLine($"Sent message: {message}");
-    }
-}
-
+// Force initialization for the processor
+var processor = app.Services.GetRequiredService<PaymentTransactionProcessor>();
 
 app.Run();
