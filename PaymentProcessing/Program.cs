@@ -1,14 +1,34 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.OpenApi.Models;
 using PaymentProcessing;
-using RabbitMQ.Client;
-using RabbitMQ.Client.Events;
+using PaymentProcessing.Database;
+
+
+// Any design time code executed just need the DB contexts initialized
+if (EF.IsDesignTime)
+{
+    new HostBuilder().Build().Run();
+    var payment_context = new PaymentProcessingContext();
+    return;
+}
 
 var builder = WebApplication.CreateBuilder(args);
+
+var serverVersion = new MySqlServerVersion("8.2.0");
+
+builder.Services.AddDbContext<PaymentProcessingContext>(
+    dbContextOptions => dbContextOptions
+        .UseMySql(Config.CONNECTION_STRING, serverVersion, options => options.EnableRetryOnFailure(
+            maxRetryCount: 10,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null))
+        .LogTo(Console.WriteLine, LogLevel.Information)
+        .EnableSensitiveDataLogging()
+        .EnableDetailedErrors()
+);
 
 
 builder.Services.AddControllers();
@@ -62,7 +82,9 @@ var paymentTransactionQueue = new RabbitMqAsyncPaymentTransactionQueue();
 await paymentTransactionQueue.Connect();
 
 builder.Services.AddScoped<IOrganizationRepository, InMemoryOrganizationRepository>();
+builder.Services.AddScoped<ITransactionRepository, InMemoryTransactionRepository>();
 builder.Services.AddSingleton<IAsyncPaymentTransactionPublisherQueue>(paymentTransactionQueue);
+builder.Services.AddSingleton<IAsyncPaymentTransactionConsumerQueue>(paymentTransactionQueue);
 builder.Services.AddSingleton<PaymentTransactionService>();
 
 var app = builder.Build();

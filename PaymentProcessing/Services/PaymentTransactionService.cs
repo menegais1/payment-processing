@@ -1,5 +1,3 @@
-using NuGet.Protocol;
-
 namespace PaymentProcessing;
 
 public class PaymentTransactionService

@@ -2,9 +2,8 @@ namespace PaymentProcessing;
 
 public enum PaymentTransactionTaskType
 {
-    Create,
-    Cancel,
-    Refund
+    Process,
+    Cancel
 }
 
 public record PaymentTransactionMessagePayload(PaymentTransactionTaskType TaskType, string MessageBody)
