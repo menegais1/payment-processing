@@ -24,4 +24,8 @@ public class Transaction
     public string? Description { get; set; }
     public string? CustomerKey { get; set; }
     public TransactionStatus Status { get; set; } = TransactionStatus.Created;
+
+    public string OrganizationId { get; set; }
+
+    public Organization Organization { get; set; }
 }

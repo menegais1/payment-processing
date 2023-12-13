@@ -6,7 +6,7 @@ public interface ITransactionRepository
 {
     public Task<Transaction> SaveTransaction(TransactionSave transactionSave);
 
-    public Task<Transaction?> GetTransaction(Guid transactionId);
+    public Task<Transaction?> GetTransaction(Guid transactionId, string orgId);
     
     
     public Task<Transaction?> GetTransactionByCustomerKey(string customerKey);

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -73,10 +74,22 @@ namespace PaymentProcessing
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<string>>> GetTransaction()
+        [Authorize]
+        public async Task<ActionResult<Transaction?>> GetTransaction(Guid transaction_id)
         {
-            List<string> response = ["bananas"];
-            return response;
+            var orgId = HttpContext.User.FindFirst("orgId")?.Value;
+            if (orgId.IsNullOrEmpty())
+            {
+                return Unauthorized("Missing orgId in Token");
+            }
+
+            var transaction = await _transactionRepository.GetTransaction(transaction_id, orgId);
+            if (transaction is null)
+            {
+                return NotFound($"No transaction found for transaction id: {transaction_id}");
+            }
+
+            return transaction;
         }
     }
 }

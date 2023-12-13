@@ -6,6 +6,8 @@ services:
     image: payment-processing
     ports:
       - "8080:8080"  # Adjust the port mapping as needed
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Development"
     depends_on:
       - rabbitmq
   
