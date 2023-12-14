@@ -42,6 +42,10 @@ The flow for authenticating in the application is:
 - Pass the token in any requests that requires authorization in the headers, with the following
   format: `"Authorization": "Bearer {JWT_TOKEN}"`
 
+## Engineering Decisions
+
+An organization concept was created to re
+
 ## Secrets and Environment Variables
 
 For security purposes, in production I would employ a service like **Doppler** for injecting the environment variables

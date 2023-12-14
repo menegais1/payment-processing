@@ -27,6 +27,12 @@ namespace PaymentProcessing
         public async Task<ActionResult<CreatePaymentTransactionResponse>> CreatePaymentTransaction(
             CreatePaymentTransactionRequest request)
         {
+            var orgId = HttpContext.User.FindFirst("orgId")?.Value;
+            if (orgId.IsNullOrEmpty())
+            {
+                return Unauthorized("Missing orgId in Token");
+            }
+
             if (request.PayerAccount.IsNullOrEmpty() || request.Amount < 0)
             {
                 return ValidationProblem("Payer account cannot be null or empty.");
@@ -55,7 +61,7 @@ namespace PaymentProcessing
 
             // We store the transaction in the DB so we have the idempotency check in place, and if the queue is offline so we can replay it later
             var transaction = await _transactionRepository.SaveTransaction(
-                new TransactionSave(request.PayerAccount, request.PayeeAccount, request.Amount)
+                new TransactionSave(request.PayerAccount, request.PayeeAccount, request.Amount, orgId)
                 {
                     Description = request.Description,
                     CustomerKey = request.CustomerKey,
@@ -83,13 +89,35 @@ namespace PaymentProcessing
                 return Unauthorized("Missing orgId in Token");
             }
 
-            var transaction = await _transactionRepository.GetTransaction(transaction_id, orgId);
-            if (transaction is null)
+            var transaction = await _transactionRepository.GetTransaction(transaction_id);
+            if (transaction is null || transaction.OrganizationId != orgId)
             {
                 return NotFound($"No transaction found for transaction id: {transaction_id}");
             }
 
             return transaction;
+        }
+
+        [HttpPatch]
+        [Authorize]
+        public async Task<ActionResult<bool>> CancelTransaction(Guid transaction_id)
+        {
+            var orgId = HttpContext.User.FindFirst("orgId")?.Value;
+            if (orgId.IsNullOrEmpty())
+            {
+                return Unauthorized("Missing orgId in Token");
+            }
+
+            var transaction = await _transactionRepository.GetTransaction(transaction_id);
+            if (transaction is null || transaction.OrganizationId != orgId)
+            {
+                return NotFound($"No transaction found for transaction id: {transaction_id}");
+            }
+
+            _publisherQueue.PublishMessage(
+                new PaymentTransactionMessagePayload(PaymentTransactionTaskType.Cancel, transaction.Id.ToJson()));
+
+            return true;
         }
     }
 }

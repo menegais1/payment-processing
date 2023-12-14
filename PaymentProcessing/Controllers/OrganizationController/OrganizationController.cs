@@ -15,7 +15,7 @@ namespace PaymentProcessing
             try
             {
                 var organization =
-                    organizationRepository.CreateOrganization(orgId: orgId, orgName: request.OrgName,
+                    await organizationRepository.CreateOrganization(orgId: orgId, orgName: request.OrgName,
                         orgSecretKey: secretKey);
                 return organization;
             }
@@ -28,7 +28,7 @@ namespace PaymentProcessing
         [HttpPost("authenticate")]
         public async Task<ActionResult<string>> Authenticate(AuthenticateRequest request)
         {
-            if (!organizationRepository.IsOrganizationValid(request.OrgId, request.OrgSecretKey))
+            if (!await organizationRepository.IsOrganizationValid(request.OrgId, request.OrgSecretKey))
                 return Unauthorized("The organization is not registered in the system.");
             return AuthenticationService.GenerateJwtToken(request.OrgId);
         }

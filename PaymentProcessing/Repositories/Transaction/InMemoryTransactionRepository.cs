@@ -5,28 +5,23 @@ namespace PaymentProcessing;
 public class InMemoryTransactionRepository : ITransactionRepository
 {
     private static List<Transaction> _transactions = [];
-    private static List<string> _uniqueCustomerKeys = [];
-    private static List<Guid> _uniqueIds = [];
 
     public async Task<Transaction> SaveTransaction(TransactionSave transactionSave)
     {
-        lock (_uniqueCustomerKeys)
+        var transaction = new Transaction()
         {
-            var transaction = new Transaction()
-            {
-                Id = Guid.NewGuid(),
-                PayeeAccount = transactionSave.PayeeAccount,
-                PayerAccount = transactionSave.PayerAccount,
-                Amount = transactionSave.Amount,
-                Fee = transactionSave.Fee,
-                CreatedAt = DateTime.UtcNow,
-                Description = transactionSave.Description,
-                CustomerKey = transactionSave.CustomerKey,
-            };
+            Id = Guid.NewGuid(),
+            PayeeAccount = transactionSave.PayeeAccount,
+            PayerAccount = transactionSave.PayerAccount,
+            Amount = transactionSave.Amount,
+            Fee = transactionSave.Fee,
+            CreatedAt = DateTime.UtcNow,
+            Description = transactionSave.Description,
+            CustomerKey = transactionSave.CustomerKey,
+        };
 
-            _transactions.Add(transaction);
-            return transaction;
-        }
+        _transactions.Add(transaction);
+        return transaction;
     }
 
 
@@ -56,5 +51,10 @@ public class InMemoryTransactionRepository : ITransactionRepository
         curTransaction.CancelledAt = transactionUpdate.CancelledAt ?? curTransaction.CancelledAt;
         curTransaction.FailedAt = transactionUpdate.FailedAt ?? curTransaction.FailedAt;
         return curTransaction;
+    }
+
+    public void Dispose()
+    {
+        // TODO release managed resources here
     }
 }

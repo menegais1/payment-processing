@@ -81,8 +81,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 var paymentTransactionQueue = new RabbitMqAsyncPaymentTransactionQueue();
 await paymentTransactionQueue.Connect();
 
-builder.Services.AddScoped<IOrganizationRepository, InMemoryOrganizationRepository>();
-builder.Services.AddScoped<ITransactionRepository, InMemoryTransactionRepository>();
+builder.Services.AddScoped<IOrganizationRepository, OrganizationRepository>();
+builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddSingleton<IAsyncPaymentTransactionPublisherQueue>(paymentTransactionQueue);
 builder.Services.AddSingleton<IAsyncPaymentTransactionConsumerQueue>(paymentTransactionQueue);
 builder.Services.AddSingleton<PaymentTransactionService>();
