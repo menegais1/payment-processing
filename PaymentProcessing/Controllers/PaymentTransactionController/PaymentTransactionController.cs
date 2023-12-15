@@ -100,7 +100,7 @@ namespace PaymentProcessing
 
         [HttpPatch]
         [Authorize]
-        public async Task<ActionResult<bool>> CancelTransaction(Guid transaction_id)
+        public async Task<ActionResult> CancelTransaction(Guid transaction_id)
         {
             var orgId = HttpContext.User.FindFirst("orgId")?.Value;
             if (orgId.IsNullOrEmpty())
@@ -117,7 +117,7 @@ namespace PaymentProcessing
             _publisherQueue.PublishMessage(
                 new PaymentTransactionMessagePayload(PaymentTransactionTaskType.Cancel, transaction.Id.ToJson()));
 
-            return true;
+            return Ok();
         }
     }
 }
