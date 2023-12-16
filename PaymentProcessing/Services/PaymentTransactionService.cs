@@ -23,9 +23,6 @@ public class PaymentTransactionService
             case PaymentTransactionTaskType.Process:
                 await ProcessTransaction(transactionMessagePayload.MessageBody.FromJson<Guid>());
                 break;
-            case PaymentTransactionTaskType.Cancel:
-                await CancelTransaction(transactionMessagePayload.MessageBody.FromJson<Guid>());
-                break;
             default:
                 throw new ArgumentOutOfRangeException(
                     $"Task type {transactionMessagePayload.TaskType} is not supported.");
@@ -41,6 +38,11 @@ public class PaymentTransactionService
         if (transaction is null)
         {
             throw new Exception($"Couldn't find transaction {transactionId} in the Database. This is not expected.");
+        }
+
+        if (transaction.Status != TransactionStatus.Created)
+        {
+            return;
         }
 
         var prob = _random.Next(0, 10);
@@ -61,22 +63,5 @@ public class PaymentTransactionService
                 Status = TransactionStatus.Failed
             });
         }
-    }
-
-    private async Task CancelTransaction(Guid transactionId)
-    {
-        await using var transactionRepository = new TransactionRepository(new PaymentProcessingContext());
-
-        var transaction = await transactionRepository.GetTransaction(transactionId);
-        if (transaction is null)
-        {
-            throw new Exception($"Couldn't find transaction {transactionId} in the Database. This is not expected.");
-        }
-
-        await transactionRepository.UpdateTransaction(transactionId, new TransactionUpdate()
-        {
-            CancelledAt = DateTime.UtcNow,
-            Status = TransactionStatus.Cancelled
-        });
     }
 }

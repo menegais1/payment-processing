@@ -114,15 +114,23 @@ namespace PaymentProcessing
                 return NotFound($"No transaction found for transaction id: {transaction_id}");
             }
 
+            if (transaction.Status == TransactionStatus.Cancelled)
+            {
+                return Ok("The transaction was already cancelled");
+            }
+
             if (transaction.Status != TransactionStatus.Created)
             {
                 return BadRequest("The transaction can't be cancelled");
             }
-            
-            _publisherQueue.PublishMessage(
-                new PaymentTransactionMessagePayload(PaymentTransactionTaskType.Cancel, transaction.Id.ToJson()));
 
-            return Ok();
+            await _transactionRepository.UpdateTransaction(transaction.Id, new TransactionUpdate()
+            {
+                CancelledAt = DateTime.UtcNow,
+                Status = TransactionStatus.Cancelled
+            });
+
+            return Ok("Transaction cancelled successfully");
         }
     }
 }

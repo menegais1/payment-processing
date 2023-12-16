@@ -128,8 +128,6 @@ public class PaymentTransactionControllerTests
 
         var result = await _controller.CancelTransaction(transactionId);
 
-        Assert.That(result, Is.TypeOf<OkResult>());
-        _publisherQueueMock.Verify(m => m.PublishMessage(It.Is<PaymentTransactionMessagePayload>(p => p.TaskType ==
-            PaymentTransactionTaskType.Cancel && p.MessageBody == payload)), Times.Once);
+        Assert.That(result, Is.TypeOf<OkObjectResult>());
     }
 }

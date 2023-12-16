@@ -3,7 +3,6 @@ namespace PaymentProcessing;
 public enum PaymentTransactionTaskType
 {
     Process,
-    Cancel
 }
 
 public record PaymentTransactionMessagePayload(PaymentTransactionTaskType TaskType, string MessageBody)

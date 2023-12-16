@@ -3,7 +3,6 @@
 To run the application, run the following commands:
 
 ```bash
-cd PaymentProcessing
 docker-compose up --build
 ```
 
@@ -42,9 +41,34 @@ The flow for authenticating in the application is:
 - Pass the token in any requests that requires authorization in the headers, with the following
   format: `"Authorization": "Bearer {JWT_TOKEN}"`
 
-## Engineering Decisions
+## Implementation Decisions
 
-An organization concept was created to re
+- An organization concept was created to represent specific customers. In a real world setting, each organization (
+  customer) would likely use a different Database to achieve multi-tenancy and keep data fully segregated, mitigating
+  security concerns.
+
+- The transaction was assumed to be instant, so there are 4 possible statuses:
+    - `Created`: Initial status when a call to Create Transaction is made.
+    - `Approved`: Transaction was completed successfully, funds have been moved from the Payer to Payee.
+    - `Failed`: It was not possible to complete the transaction, might be due to lack of funds or a provider error.
+    - `Cancelled`: Indicates that a transaction should not be processed anymore.
+- A `Scheduled` status could be added for scheduling transactions, with a cron-job querying for scheduled transactions
+  and
+  putting them into the processing queue when the scheduled time arrived.
+- Cancellation is a synchronous process, marking the transaction as cancelled to avoid it from being processed.
+- Idempotent request handling for creating transactions.
+- Unit tests implemented in the controller layer.
+
+## Future Improvements
+
+- Distributed Lock to prevent race condition when cancelling a transaction that may be processing.
+- Distributed Lock for idempotency checks, discussed in [Idempotency Requests Handling](#idempotency-requests-handling).
+- Improve Observability layer with Logging and distributed tracing, employing a observability service like Elastic and
+  Prometheus + Grafana.
+- Separate business-logic from the API Interface layer (Controllers), this improves testability and allows different
+  protocols to be implemented with minimal code changes, like adding support for Grpc. A Use-cases architecture could be
+  used.
+- Increase test coverage.
 
 ## Secrets and Environment Variables
 
@@ -101,4 +125,45 @@ solution is more robust to failure and also covers the possibility of having sch
 
 If pooling is used, we must lock the transaction row in the DB or using a distributed lock with some shared storage to
 process the transaction, so even if multiple duplicated messages are present in the queue, no duplicated side effects
-will occur to that same transaction. 
+will occur to that same transaction.
+
+## Data security and encryption
+
+For encrypting sensitive data, if for example the system allowed credit-card payments, I would use an encryption proxy
+so
+the data was encrypted before reaching the system, keeping user sensible information safe. When the data needed to be
+used, it would be decrypted and processed in a safe environment. A solution
+like [Evervault](https://evervault.com/solutions/pci) could be employed to achieve that.
+
+## Scalability and High Availability
+
+![Diagram](./diagram.jpeg)
+
+Regarding scalability, the above diagram gives a high-level overview of what the system could look like, the API Gateway
+should be able to handle authorization and authentication, to avoid procesisng requests at the application level that
+might be rejected, reducing the likelihood of a DOS attack. The Gateway also act as a internal service aggregator, if a
+Microservice architecture is used and there are multiple different client-facing services with distinct REST APIs.
+
+The Load Balancer can be a Layer 4 or Layer 7 one, depending if long-standing connections are employed in the
+application level. It would be responsible for forwarding a requests to a clusters of services, guaranteeing
+high-availability and the overall system throughput capacity.
+
+Between the actual user facing API service, there lies a queue service for asynchronous processing of long-running
+tasks,
+this queue is both used by the APIs and by a cron-job, responsible for fetching data from the DB to process scheduled
+transactions, or to catch transactions that may not have been processed due to some error at the point ot creation. The
+pool of background workers then uses a pull subscription to the queue, and may scale based on the amount of messages in
+the queue.
+
+The Organization service is basically a resolver for the DB and customer specific infrastructure, this allows massive
+customers to have their own pool of resources and avoid their large volume from hindering the service availability for
+other
+customers, it also allows the creation of completely separate data storage layers, if required for compliance.
+
+The Database infrastructure should be in a separate private network, for security reasons, and is assumed to be
+reachable by all services.
+
+The option of implementing this as a monolith or microservices is up to the team, but initially I would recommend the
+monolithic approach as it makes debugging and creating tooling much easier, with a more straightforward workflow. If
+performance issues are identified via monitoring with Observability tools, parts of the system can then be separated in
+their own services.
