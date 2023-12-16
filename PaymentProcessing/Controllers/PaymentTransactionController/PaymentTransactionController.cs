@@ -81,7 +81,7 @@ namespace PaymentProcessing
 
         [HttpGet]
         [Authorize]
-        public async Task<ActionResult<Transaction?>> GetTransaction(Guid transaction_id)
+        public async Task<ActionResult<ClientFacingTransaction?>> GetTransaction(Guid transaction_id)
         {
             var orgId = HttpContext.User.FindFirst("orgId")?.Value;
             if (orgId.IsNullOrEmpty())
@@ -95,7 +95,7 @@ namespace PaymentProcessing
                 return NotFound($"No transaction found for transaction id: {transaction_id}");
             }
 
-            return transaction;
+            return ClientFacingTransaction.ConvertToClientFacingTransaction(transaction);
         }
 
         [HttpPatch]
@@ -114,6 +114,11 @@ namespace PaymentProcessing
                 return NotFound($"No transaction found for transaction id: {transaction_id}");
             }
 
+            if (transaction.Status != TransactionStatus.Created)
+            {
+                return BadRequest("The transaction can't be cancelled");
+            }
+            
             _publisherQueue.PublishMessage(
                 new PaymentTransactionMessagePayload(PaymentTransactionTaskType.Cancel, transaction.Id.ToJson()));
 

@@ -8,7 +8,7 @@ namespace PaymentProcessing
     public class OrganizationController(IOrganizationRepository organizationRepository) : ControllerBase
     {
         [HttpPost("register")]
-        public async Task<ActionResult<Organization>> Register(RegisterRequest request)
+        public async Task<ActionResult<ClientFacingOrganization>> Register(RegisterRequest request)
         {
             var secretKey = "sk_" + AuthenticationService.GenerateSecretKey();
             var orgId = "org_" + AuthenticationService.GenerateSecretKey();
@@ -17,7 +17,12 @@ namespace PaymentProcessing
                 var organization =
                     await organizationRepository.CreateOrganization(orgId: orgId, orgName: request.OrgName,
                         orgSecretKey: secretKey);
-                return organization;
+                return new ClientFacingOrganization()
+                {
+                    Id = organization.Id,
+                    Name = organization.Name,
+                    SecretKey = organization.SecretKey
+                };
             }
             catch (OrganizationAlreadyExistsException e)
             {
