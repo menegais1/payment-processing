@@ -59,6 +59,7 @@ The flow for authenticating in the application is:
 - Cancellation can only happen for transactions in the `Created` status.
 - Idempotent request handling for creating transactions.
 - Unit tests implemented in the controller layer.
+- The `Amount` and `Fee` for the `Transaction` were implemented as Integers to avoid floating point numbers. The unit is cents of dollar. 
 
 ## Future Improvements
 
