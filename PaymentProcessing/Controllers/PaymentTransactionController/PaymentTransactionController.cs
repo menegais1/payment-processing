@@ -35,7 +35,7 @@ namespace PaymentProcessing
 
             if (request.PayerAccount.IsNullOrEmpty() || request.Amount < 0)
             {
-                return ValidationProblem("Payer account cannot be null or empty.");
+                return ValidationProblem("Request Amount needs to be a positive integer.");
             }
 
             if (request.PayeeAccount.IsNullOrEmpty())
@@ -98,7 +98,7 @@ namespace PaymentProcessing
             return ClientFacingTransaction.ConvertToClientFacingTransaction(transaction);
         }
 
-        [HttpPatch]
+        [HttpPatch("cancel")]
         [Authorize]
         public async Task<ActionResult> CancelTransaction(Guid transaction_id)
         {

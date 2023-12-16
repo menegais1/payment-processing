@@ -56,6 +56,7 @@ The flow for authenticating in the application is:
   and
   putting them into the processing queue when the scheduled time arrived.
 - Cancellation is a synchronous process, marking the transaction as cancelled to avoid it from being processed.
+- Cancellation can only happen for transactions in the `Created` status.
 - Idempotent request handling for creating transactions.
 - Unit tests implemented in the controller layer.
 
@@ -69,6 +70,8 @@ The flow for authenticating in the application is:
   protocols to be implemented with minimal code changes, like adding support for Grpc. A Use-cases architecture could be
   used.
 - Increase test coverage.
+- Improve API Schemas.
+- Fire webhooks for status updates on async transaction processing 
 
 ## Secrets and Environment Variables
 
@@ -140,8 +143,8 @@ like [Evervault](https://evervault.com/solutions/pci) could be employed to achie
 ![Diagram](./diagram.jpeg)
 
 Regarding scalability, the above diagram gives a high-level overview of what the system could look like, the API Gateway
-should be able to handle authorization and authentication, to avoid procesisng requests at the application level that
-might be rejected, reducing the likelihood of a DOS attack. The Gateway also act as a internal service aggregator, if a
+should be able to handle authorization and authentication, to avoid processing requests at the application level that
+might be rejected. The Gateway also act as a internal service aggregator, if a
 Microservice architecture is used and there are multiple different client-facing services with distinct REST APIs.
 
 The Load Balancer can be a Layer 4 or Layer 7 one, depending if long-standing connections are employed in the
